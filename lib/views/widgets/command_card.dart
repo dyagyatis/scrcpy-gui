@@ -14,6 +14,7 @@ class CommandCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isRunning = state.isCurrentDeviceRunning();
+    final currentDev = state.currentDevice;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -36,10 +37,10 @@ class CommandCard extends StatelessWidget {
               ),
             ),
             child: Row(
-              children: const [
-                Icon(Icons.terminal_rounded, size: 18, color: AppTheme.purpleAccent),
-                SizedBox(width: 8),
-                Text(
+              children: [
+                const Icon(Icons.terminal_rounded, size: 18, color: AppTheme.purpleAccent),
+                const SizedBox(width: 8),
+                const Text(
                   'Command',
                   style: TextStyle(
                     fontSize: 13,
@@ -47,6 +48,52 @@ class CommandCard extends StatelessWidget {
                     color: AppTheme.purpleAccent,
                   ),
                 ),
+                if (state.config.videoSource == 'camera') ...[
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.yellowAccent.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppTheme.yellowAccent, width: 0.5),
+                    ),
+                    child: const Text(
+                      '📷 WEBCAM MODE',
+                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.yellowAccent),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                // Battery & Device Info Pill in header
+                if (currentDev != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgInput,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.borderColor),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          currentDev.batteryLevel != null
+                              ? '${currentDev.isCharging ? "⚡" : "🔋"} ${currentDev.batteryLevel}%'
+                              : '📱 Connected',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.greenAccent),
+                        ),
+                        if (currentDev.androidVersion != null) ...[
+                          const SizedBox(width: 6),
+                          Text('• ${currentDev.androidVersion}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                        ],
+                        if (currentDev.resolution != null) ...[
+                          const SizedBox(width: 6),
+                          Text('• ${currentDev.resolution}', style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -162,6 +209,25 @@ class CommandCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
 
+                    // Multi-Device Launch All Button (if >= 2 devices connected)
+                    if (state.devices.length > 1) ...[
+                      Tooltip(
+                        message: 'Launch All Connected Devices Simultaneously',
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.purpleAccent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            minimumSize: Size.zero,
+                          ),
+                          icon: const Icon(Icons.devices_other, size: 14),
+                          label: const Text('Launch All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          onPressed: () => state.launchAllDevices(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+
                     // Favorite / Heart Button (Red)
                     InkWell(
                       onTap: onFavorite,
@@ -192,10 +258,10 @@ class CommandCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: AppTheme.borderColor),
                       ),
-                      child: Center(
+                      child: const Center(
                         child: Text(
                           '5555',
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
+                          style: TextStyle(fontSize: 12, color: AppTheme.textPrimary),
                         ),
                       ),
                     ),
@@ -227,7 +293,7 @@ class CommandCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
 
-                    // Clear / Disconnect Button
+                    // Clear / Refresh Button
                     InkWell(
                       onTap: () {
                         state.refreshDevices();
@@ -242,7 +308,7 @@ class CommandCard extends StatelessWidget {
                           border: Border.all(color: AppTheme.borderColor),
                         ),
                         child: const Icon(
-                          Icons.close_rounded,
+                          Icons.refresh_rounded,
                           color: AppTheme.textSecondary,
                           size: 18,
                         ),

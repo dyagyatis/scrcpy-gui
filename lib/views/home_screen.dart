@@ -47,10 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Top Warning Banner (Red) if scrcpy is not detected
+                // Top Warning / Auto-Download Banner (Red) if scrcpy is not detected
                 if (!state.isBinaryReady && !_dismissWarning)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3B1214),
                       border: Border.all(color: AppTheme.redAccent.withOpacity(0.4)),
@@ -61,13 +61,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 10),
                         const Expanded(
                           child: Text(
-                            'Scrcpy was not found on your system PATH. Place scrcpy inside the bin/ directory or configure PATH in Settings.',
+                            'Scrcpy was not found on your system PATH. You can download official binaries automatically in 1 click.',
                             style: TextStyle(fontSize: 12, color: Color(0xFFFCA5A5)),
                           ),
                         ),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.greenAccent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                          ),
+                          icon: state.isDownloading
+                              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.download, size: 14),
+                          label: Text(state.isDownloading ? 'Downloading...' : '📥 Download Scrcpy v4.1', style: const TextStyle(fontSize: 11)),
+                          onPressed: state.isDownloading ? null : () => state.downloadScrcpyBinaries(),
+                        ),
+                        const SizedBox(width: 8),
                         TextButton(
                           onPressed: () => setState(() => _dismissWarning = true),
-                          child: const Text('Dismiss', style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 12)),
+                          child: const Text('Dismiss', style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 11)),
                         ),
                       ],
                     ),

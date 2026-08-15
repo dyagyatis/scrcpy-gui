@@ -13,10 +13,12 @@ class GeneralCard extends StatelessWidget {
     final cfg = state.config;
 
     return CustomSectionCard(
-      title: 'General',
+      title: 'General & Video Source',
       icon: Icons.computer_rounded,
       accentColor: AppTheme.orangeAccent,
       onReset: () {
+        cfg.videoSource = 'display';
+        cfg.cameraFacing = 'back';
         cfg.fullscreen = false;
         cfg.turnScreenOff = false;
         cfg.stayAwake = true;
@@ -31,6 +33,90 @@ class GeneralCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 1. Video Source Mode: Display vs Camera (Webcam)
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.bgInput,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.videocam_outlined, size: 16, color: AppTheme.yellowAccent),
+                const SizedBox(width: 8),
+                const Text('Video Source:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(width: 12),
+                ChoiceChip(
+                  label: const Text('📱 Screen Mirroring', style: TextStyle(fontSize: 11)),
+                  selected: cfg.videoSource == 'display',
+                  selectedColor: AppTheme.purpleAccent.withOpacity(0.3),
+                  onSelected: (sel) {
+                    if (sel) {
+                      cfg.videoSource = 'display';
+                      state.saveSettings();
+                    }
+                  },
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('📷 Camera (PC Webcam)', style: TextStyle(fontSize: 11)),
+                  selected: cfg.videoSource == 'camera',
+                  selectedColor: AppTheme.yellowAccent.withOpacity(0.3),
+                  onSelected: (sel) {
+                    if (sel) {
+                      cfg.videoSource = 'camera';
+                      state.saveSettings();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          if (cfg.videoSource == 'camera') ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: cfg.cameraFacing,
+                    decoration: const InputDecoration(labelText: 'Camera Facing', isDense: true),
+                    dropdownColor: AppTheme.bgCard,
+                    items: const [
+                      DropdownMenuItem(value: 'back', child: Text('Back Camera (Main)', style: TextStyle(fontSize: 12))),
+                      DropdownMenuItem(value: 'front', child: Text('Front Camera (Selfie)', style: TextStyle(fontSize: 12))),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        cfg.cameraFacing = v;
+                        state.saveSettings();
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: cfg.cameraFps.isEmpty ? '60' : cfg.cameraFps,
+                    decoration: const InputDecoration(labelText: 'Camera FPS', isDense: true),
+                    dropdownColor: AppTheme.bgCard,
+                    items: const [
+                      DropdownMenuItem(value: '60', child: Text('60 FPS (Smooth)', style: TextStyle(fontSize: 12))),
+                      DropdownMenuItem(value: '30', child: Text('30 FPS', style: TextStyle(fontSize: 12))),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        cfg.cameraFps = v;
+                        state.saveSettings();
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 8),
+
           // Row 1: Window Title, Fullscreen, Screen Off
           Row(
             children: [

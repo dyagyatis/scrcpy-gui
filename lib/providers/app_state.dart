@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -17,10 +18,13 @@ class AppState extends ChangeNotifier {
   String? selectedSerial;
   ScrcpyConfig config = ScrcpyConfig();
   String selectedPreset = 'default';
+  List<Preset> userPresets = [];
   List<String> recentIps = [];
   List<String> logs = [];
 
   bool isBinaryReady = false;
+  bool isDownloading = false;
+  String downloadStatus = '';
   String? scrcpyPath;
   String? adbPath;
 
@@ -39,22 +43,14 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _detectBinaries() async {
-    // Check local project bin/ folder first
     final baseDir = Directory.current.path;
     final localBin = p.join(baseDir, 'bin');
-    final localScrcpy = p.join(localBin, 'scrcpy.exe');
-    final localAdb = p.join(localBin, 'adb.exe');
-
-    // Also check sibling scrcpy-gui project bin folder
-    final siblingScrcpy = p.join(Directory.current.parent.path, 'scrcpy-gui', 'bin', 'scrcpy.exe');
-    final siblingAdb = p.join(Directory.current.parent.path, 'scrcpy-gui', 'bin', 'adb.exe');
+    final localScrcpy = p.join(localBin, Platform.isWindows ? 'scrcpy.exe' : 'scrcpy');
+    final localAdb = p.join(localBin, Platform.isWindows ? 'adb.exe' : 'adb');
 
     if (File(localScrcpy).existsSync() && File(localAdb).existsSync()) {
       scrcpyPath = localScrcpy;
       adbPath = localAdb;
-    } else if (File(siblingScrcpy).existsSync() && File(siblingAdb).existsSync()) {
-      scrcpyPath = siblingScrcpy;
-      adbPath = siblingAdb;
     } else {
       scrcpyPath = 'scrcpy';
       adbPath = 'adb';
@@ -78,6 +74,11 @@ class AppState extends ChangeNotifier {
     if (data.containsKey('selectedPreset')) {
       selectedPreset = data['selectedPreset'];
     }
+    if (data.containsKey('customPresets')) {
+      userPresets = (data['customPresets'] as List)
+          .map((item) => Preset.fromJson(item))
+          .toList();
+    }
     notifyListeners();
   }
 
@@ -86,6 +87,7 @@ class AppState extends ChangeNotifier {
       config: config,
       recentIps: recentIps,
       selectedPreset: selectedPreset,
+      customPresets: userPresets,
     );
     notifyListeners();
   }
@@ -107,26 +109,62 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  AndroidDevice? get currentDevice =>
+      devices.where((d) => d.serial == selectedSerial).firstOrNull;
+
   void applyPreset(Preset preset) {
     selectedPreset = preset.id;
-    config = preset.config;
+    config = ScrcpyConfig.fromJson(preset.config.toJson());
     saveSettings();
     notifyListeners();
   }
 
-  Future<bool> launchScrcpy() async {
+  void addCustomPreset({required String name, required String description, required String icon}) {
+    final newId = 'custom_${DateTime.now().millisecondsSinceEpoch}';
+    final custom = Preset(
+      id: newId,
+      name: name,
+      description: description,
+      icon: icon,
+      config: ScrcpyConfig.fromJson(config.toJson()),
+      isCustom: true,
+    );
+    userPresets.add(custom);
+    selectedPreset = newId;
+    saveSettings();
+    notifyListeners();
+  }
+
+  void deleteCustomPreset(String id) {
+    userPresets.removeWhere((p) => p.id == id);
+    if (selectedPreset == id) selectedPreset = 'default';
+    saveSettings();
+    notifyListeners();
+  }
+
+  Future<bool> launchScrcpy([String? serial]) async {
     if (!isBinaryReady) return false;
+    final targetSerial = serial ?? selectedSerial ?? '';
     final success = await scrcpy.start(
       config: config,
-      serial: selectedSerial ?? '',
+      serial: targetSerial,
       onFinished: (_) => notifyListeners(),
     );
     notifyListeners();
     return success;
   }
 
-  Future<void> stopScrcpy() async {
-    await scrcpy.stop(selectedSerial);
+  Future<void> launchAllDevices() async {
+    for (var dev in devices) {
+      if (dev.state == 'device') {
+        await scrcpy.start(config: config, serial: dev.serial, onFinished: (_) => notifyListeners());
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> stopScrcpy([String? serial]) async {
+    await scrcpy.stop(serial ?? selectedSerial);
     notifyListeners();
   }
 
@@ -153,5 +191,53 @@ class AppState extends ChangeNotifier {
       recentIps = recentIps.sublist(0, 10);
     }
     saveSettings();
+  }
+
+  Future<bool> downloadScrcpyBinaries() async {
+    isDownloading = true;
+    downloadStatus = 'Downloading Scrcpy v4.1 archive...';
+    notifyListeners();
+
+    try {
+      final binDir = Directory(p.join(Directory.current.path, 'bin'));
+      await binDir.create(recursive: true);
+
+      if (Platform.isWindows) {
+        // Download Win64 Scrcpy
+        final url = 'https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-win64-v4.1.zip';
+        final zipPath = p.join(binDir.path, 'scrcpy_temp.zip');
+        
+        final client = HttpClient();
+        final req = await client.getUrl(Uri.parse(url));
+        final resp = await req.close();
+        final sink = File(zipPath).openWrite();
+        await resp.pipe(sink);
+
+        downloadStatus = 'Extracting binaries...';
+        notifyListeners();
+
+        // Extract with PowerShell
+        await Process.run('powershell', [
+          '-Command',
+          'Expand-Archive -Path "$zipPath" -DestinationPath "${binDir.path}\\temp_scrcpy" -Force; '
+          'Copy-Item -Path "${binDir.path}\\temp_scrcpy\\scrcpy-win64-v4.1\\*" -Destination "${binDir.path}" -Recurse -Force; '
+          'Remove-Item -Path "$zipPath", "${binDir.path}\\temp_scrcpy" -Recurse -Force'
+        ]);
+      } else {
+        // Linux / macOS: check package manager or download
+        downloadStatus = 'Please install via package manager: brew install scrcpy / apt install scrcpy';
+      }
+
+      await _detectBinaries();
+      isDownloading = false;
+      downloadStatus = isBinaryReady ? '✅ Scrcpy v4.1 installed successfully!' : '❌ Failed to configure binaries.';
+      notifyListeners();
+      return isBinaryReady;
+    } catch (e) {
+      isDownloading = false;
+      downloadStatus = 'Error downloading: $e';
+      notifyListeners();
+      return false;
+    }
   }
 }

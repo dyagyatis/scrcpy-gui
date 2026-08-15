@@ -27,7 +27,7 @@ class SettingsTab extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Configure Scrcpy and ADB binary paths, default capture directories, and application behavior.',
+            'Configure Scrcpy and ADB binary paths, auto-download tools, default folders, and application behavior.',
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 20),
@@ -43,7 +43,24 @@ class SettingsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('⚙️ Scrcpy & ADB Executables', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                Row(
+                  children: [
+                    const Text('⚙️ Scrcpy & ADB Executables', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: state.isBinaryReady ? AppTheme.greenAccent.withOpacity(0.15) : AppTheme.redAccent.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: state.isBinaryReady ? AppTheme.greenAccent : AppTheme.redAccent),
+                      ),
+                      child: Text(
+                        state.isBinaryReady ? '✅ Ready' : '⚠️ Missing',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: state.isBinaryReady ? AppTheme.greenAccent : AppTheme.redAccent),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 TextFormField(
                   initialValue: state.scrcpyPath ?? 'scrcpy',
@@ -62,7 +79,7 @@ class SettingsTab extends StatelessWidget {
                     state.adb.adbPath = v;
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     ElevatedButton.icon(
@@ -71,20 +88,42 @@ class SettingsTab extends StatelessWidget {
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.check_circle_outline, size: 16),
-                      label: const Text('Test Binaries Availability'),
+                      label: const Text('Test Availability'),
                       onPressed: () async {
                         final ok = await state.adb.isAvailable();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(ok ? '✅ Scrcpy & ADB are ready!' : '❌ Binaries not found or failed to execute.'),
+                              content: Text(ok ? '✅ Scrcpy & ADB are ready and functional!' : '❌ Binaries not found or failed to execute.'),
                             ),
                           );
                         }
                       },
                     ),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.greenAccent,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: state.isDownloading
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.download_rounded, size: 16),
+                      label: Text(state.isDownloading ? 'Downloading...' : '📥 1-Click Auto-Download Scrcpy v4.1'),
+                      onPressed: state.isDownloading ? null : () => state.downloadScrcpyBinaries(),
+                    ),
                   ],
                 ),
+                if (state.downloadStatus.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    state.downloadStatus,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: state.downloadStatus.contains('✅') ? AppTheme.greenAccent : AppTheme.yellowAccent,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -100,24 +139,22 @@ class SettingsTab extends StatelessWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('📁 Default Save Folders', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: '~/Pictures/ScrcpyScreenshots',
-                  decoration: const InputDecoration(labelText: 'Screenshots Folder', isDense: true),
+              children: const [
+                Text('📁 Default Save Folders', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                SizedBox(height: 12),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Screenshots Folder', hintText: '~/Pictures/ScrcpyScreenshots', isDense: true),
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  initialValue: '~/Videos/ScrcpyRecordings',
-                  decoration: const InputDecoration(labelText: 'Screen Recordings Folder', isDense: true),
+                SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Screen Recordings Folder', hintText: '~/Videos/ScrcpyRecordings', isDense: true),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
 
-          // 3. About
+          // 3. About Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -134,7 +171,7 @@ class SettingsTab extends StatelessWidget {
                   children: const [
                     Text('Scrcpy GUI Flutter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                     SizedBox(height: 2),
-                    Text('Version 1.2.0 • Cross-Platform (Windows, Linux, macOS)', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                    Text('Version 1.3.0 • Cross-Platform (Windows, Linux, macOS)', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                   ],
                 ),
               ],

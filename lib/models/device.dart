@@ -4,6 +4,10 @@ class AndroidDevice {
   final String model;
   final String product;
   final bool isWifi;
+  int? batteryLevel;
+  bool isCharging;
+  String? androidVersion;
+  String? resolution;
 
   AndroidDevice({
     required this.serial,
@@ -11,6 +15,10 @@ class AndroidDevice {
     required this.model,
     required this.product,
     required this.isWifi,
+    this.batteryLevel,
+    this.isCharging = false,
+    this.androidVersion,
+    this.resolution,
   });
 
   String get displayName {

@@ -6,6 +6,7 @@ class Preset {
   final String description;
   final String icon;
   final ScrcpyConfig config;
+  final bool isCustom;
 
   Preset({
     required this.id,
@@ -13,7 +14,26 @@ class Preset {
     required this.description,
     required this.icon,
     required this.config,
+    this.isCustom = false,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'icon': icon,
+    'config': config.toJson(),
+    'isCustom': isCustom,
+  };
+
+  factory Preset.fromJson(Map<String, dynamic> json) => Preset(
+    id: json['id'] ?? '',
+    name: json['name'] ?? '',
+    description: json['description'] ?? '',
+    icon: json['icon'] ?? '⭐',
+    config: ScrcpyConfig.fromJson(json['config'] ?? {}),
+    isCustom: json['isCustom'] ?? true,
+  );
 
   static List<Preset> get defaultPresets => [
     Preset(
@@ -48,6 +68,20 @@ class Preset {
         turnScreenOff: false,
         stayAwake: true,
         showTouches: false,
+      ),
+    ),
+    Preset(
+      id: 'webcam',
+      name: 'Веб-камера (Webcam)',
+      description: 'Использовать камеру телефона как вебку ПК (1080p, 60fps)',
+      icon: '📷',
+      config: ScrcpyConfig(
+        videoSource: 'camera',
+        cameraFacing: 'back',
+        cameraSize: '1920x1080',
+        cameraFps: '60',
+        bitRate: 16,
+        enableAudio: true,
       ),
     ),
     Preset(
@@ -96,22 +130,6 @@ class Preset {
         turnScreenOff: true,
         stayAwake: true,
         showTouches: true,
-      ),
-    ),
-    Preset(
-      id: 'audio_only',
-      name: 'Только звук',
-      description: 'Трансляция звука без видеопотока',
-      icon: '🎵',
-      config: ScrcpyConfig(
-        maxSize: '0',
-        bitRate: 1,
-        maxFps: '0',
-        videoCodec: 'h264',
-        enableAudio: true,
-        turnScreenOff: false,
-        stayAwake: false,
-        showTouches: false,
       ),
     ),
   ];

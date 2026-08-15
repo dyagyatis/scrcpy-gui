@@ -29,11 +29,49 @@ class AdbService {
     for (var line in lines.skip(1)) {
       if (line.trim().isEmpty) continue;
       final dev = AndroidDevice.fromAdbLine(line);
-      if (dev.serial.isNotEmpty) {
+      if (dev.serial.isNotEmpty && dev.state == 'device') {
+        // Enrich device info
+        await populateDeviceDetails(dev);
+        devices.add(dev);
+      } else if (dev.serial.isNotEmpty) {
         devices.add(dev);
       }
     }
     return devices;
+  }
+
+  Future<void> populateDeviceDetails(AndroidDevice dev) async {
+    try {
+      // 1. Battery Info
+      final batRes = await runAdb(['-s', dev.serial, 'shell', 'dumpsys', 'battery']);
+      if (batRes.exitCode == 0) {
+        final lines = batRes.stdout.toString().split('\n');
+        for (var line in lines) {
+          final trimmed = line.trim();
+          if (trimmed.startsWith('level:')) {
+            dev.batteryLevel = int.tryParse(trimmed.split(':').last.trim());
+          } else if (trimmed.startsWith('status:')) {
+            final st = int.tryParse(trimmed.split(':').last.trim());
+            dev.isCharging = (st == 2 || st == 5); // 2: Charging, 5: Full
+          }
+        }
+      }
+
+      // 2. Android Version
+      final verRes = await runAdb(['-s', dev.serial, 'shell', 'getprop', 'ro.build.version.release']);
+      if (verRes.exitCode == 0) {
+        final v = verRes.stdout.toString().trim();
+        if (v.isNotEmpty) dev.androidVersion = 'Android $v';
+      }
+
+      // 3. Screen Resolution
+      final wmRes = await runAdb(['-s', dev.serial, 'shell', 'wm', 'size']);
+      if (wmRes.exitCode == 0) {
+        final out = wmRes.stdout.toString().trim();
+        final match = RegExp(r'(\d+x\d+)').firstMatch(out);
+        if (match != null) dev.resolution = match.group(1);
+      }
+    } catch (_) {}
   }
 
   Future<Map<String, dynamic>> connectWifi(String ipPort) async {

@@ -1,4 +1,11 @@
 class ScrcpyConfig {
+  // Video Source (Display vs Webcam / Camera)
+  String videoSource; // 'display', 'camera'
+  String cameraFacing; // 'front', 'back'
+  String cameraSize; // e.g. 1920x1080
+  String cameraFps; // e.g. 60
+  bool cameraHighSpeed;
+
   // Video
   String maxSize; // 0 = original
   int bitRate; // Mbps
@@ -42,6 +49,11 @@ class ScrcpyConfig {
   String screenshotDirectory;
 
   ScrcpyConfig({
+    this.videoSource = 'display',
+    this.cameraFacing = 'back',
+    this.cameraSize = '',
+    this.cameraFps = '',
+    this.cameraHighSpeed = false,
     this.maxSize = '0',
     this.bitRate = 8,
     this.maxFps = '0',
@@ -88,14 +100,31 @@ class ScrcpyConfig {
       return args;
     }
 
+    // Camera / Webcam Mode (Android 12+)
+    if (videoSource == 'camera') {
+      args.add('--video-source=camera');
+      if (cameraFacing.isNotEmpty) {
+        args.addAll(['--camera-facing', cameraFacing]);
+      }
+      if (cameraSize.isNotEmpty) {
+        args.addAll(['--camera-size', cameraSize]);
+      }
+      if (cameraFps.isNotEmpty) {
+        args.addAll(['--camera-fps', cameraFps]);
+      }
+      if (cameraHighSpeed) {
+        args.add('--camera-high-speed');
+      }
+    }
+
     // Video
-    if (maxSize != '0' && maxSize.isNotEmpty) {
+    if (maxSize != '0' && maxSize.isNotEmpty && videoSource != 'camera') {
       args.addAll(['--max-size', maxSize]);
     }
     if (bitRate > 0) {
       args.addAll(['--video-bit-rate', '${bitRate}M']);
     }
-    if (maxFps != '0' && maxFps.isNotEmpty) {
+    if (maxFps != '0' && maxFps.isNotEmpty && videoSource != 'camera') {
       args.addAll(['--max-fps', maxFps]);
     }
     if (videoCodec.isNotEmpty) {
@@ -145,7 +174,7 @@ class ScrcpyConfig {
     if (borderless) args.add('--window-borderless');
 
     // Controls
-    if (turnScreenOff) args.add('--turn-screen-off');
+    if (turnScreenOff && videoSource != 'camera') args.add('--turn-screen-off');
     if (stayAwake) args.add('--stay-awake');
     if (showTouches) args.add('--show-touches');
     if (noControl) args.add('--no-control');
@@ -161,6 +190,11 @@ class ScrcpyConfig {
   }
 
   Map<String, dynamic> toJson() => {
+    'videoSource': videoSource,
+    'cameraFacing': cameraFacing,
+    'cameraSize': cameraSize,
+    'cameraFps': cameraFps,
+    'cameraHighSpeed': cameraHighSpeed,
     'maxSize': maxSize,
     'bitRate': bitRate,
     'maxFps': maxFps,
@@ -196,6 +230,11 @@ class ScrcpyConfig {
   };
 
   factory ScrcpyConfig.fromJson(Map<String, dynamic> json) => ScrcpyConfig(
+    videoSource: json['videoSource'] ?? 'display',
+    cameraFacing: json['cameraFacing'] ?? 'back',
+    cameraSize: json['cameraSize'] ?? '',
+    cameraFps: json['cameraFps'] ?? '',
+    cameraHighSpeed: json['cameraHighSpeed'] ?? false,
     maxSize: json['maxSize'] ?? '0',
     bitRate: json['bitRate'] ?? 8,
     maxFps: json['maxFps'] ?? '0',

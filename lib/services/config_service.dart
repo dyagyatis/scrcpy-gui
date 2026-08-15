@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import '../models/scrcpy_config.dart';
+import '../models/preset.dart';
 
 class ConfigService {
   final String _configFile;
@@ -33,6 +34,7 @@ class ConfigService {
     required ScrcpyConfig config,
     required List<String> recentIps,
     required String selectedPreset,
+    List<Preset> customPresets = const [],
   }) async {
     try {
       final file = File(_configFile);
@@ -41,6 +43,7 @@ class ConfigService {
         'config': config.toJson(),
         'recentIps': recentIps,
         'selectedPreset': selectedPreset,
+        'customPresets': customPresets.map((p) => p.toJson()).toList(),
       };
       await file.writeAsString(const JsonEncoder.withIndent('  ').convert(data));
     } catch (e) {
