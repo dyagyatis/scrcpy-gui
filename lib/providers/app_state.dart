@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -26,6 +27,11 @@ class AppState extends ChangeNotifier {
   List<String> recentIps = [];
   List<String> logs = [];
 
+  // Scrcpy Versions
+  List<String> availableScrcpyVersions = ['v4.1', 'v4.0', 'v3.3.4', 'v3.1', 'v2.7', 'v2.4'];
+  String selectedScrcpyVersion = 'v4.1';
+  bool isFetchingVersions = false;
+
   bool isBinaryReady = false;
   bool isDownloading = false;
   String downloadStatus = '';
@@ -42,6 +48,7 @@ class AppState extends ChangeNotifier {
     await _detectBinaries();
     await _loadConfig();
     await refreshDevices();
+    fetchAvailableScrcpyVersions();
     scrcpy.logs.listen((log) {
       logs.add(log);
       notifyListeners();
@@ -74,6 +81,9 @@ class AppState extends ChangeNotifier {
     if (data.containsKey('language')) {
       language = data['language'];
     }
+    if (data.containsKey('selectedScrcpyVersion')) {
+      selectedScrcpyVersion = data['selectedScrcpyVersion'];
+    }
     if (data.containsKey('config')) {
       config = ScrcpyConfig.fromJson(data['config']);
     }
@@ -94,6 +104,42 @@ class AppState extends ChangeNotifier {
   Future<void> setLanguage(String lang) async {
     language = lang;
     await saveSettings();
+    notifyListeners();
+  }
+
+  void setSelectedScrcpyVersion(String ver) {
+    selectedScrcpyVersion = ver;
+    saveSettings();
+    notifyListeners();
+  }
+
+  Future<void> fetchAvailableScrcpyVersions() async {
+    isFetchingVersions = true;
+    notifyListeners();
+    try {
+      final client = HttpClient();
+      client.userAgent = 'Scrcpy-GUI-Flutter';
+      final uri = Uri.parse('https://api.github.com/repos/Genymobile/scrcpy/releases');
+      final req = await client.getUrl(uri);
+      final resp = await req.close();
+
+      if (resp.statusCode == 200) {
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final list = jsonDecode(bodyStr) as List;
+        final tags = list
+            .map((item) => item['tag_name']?.toString() ?? '')
+            .where((t) => t.isNotEmpty && t.startsWith('v'))
+            .toList();
+
+        if (tags.isNotEmpty) {
+          availableScrcpyVersions = tags;
+          if (!availableScrcpyVersions.contains(selectedScrcpyVersion)) {
+            selectedScrcpyVersion = availableScrcpyVersions.first;
+          }
+        }
+      }
+    } catch (_) {}
+    isFetchingVersions = false;
     notifyListeners();
   }
 
@@ -208,9 +254,10 @@ class AppState extends ChangeNotifier {
     saveSettings();
   }
 
-  Future<bool> downloadScrcpyBinaries() async {
+  Future<bool> downloadScrcpyBinaries({String? version}) async {
+    final ver = version ?? selectedScrcpyVersion;
     isDownloading = true;
-    downloadStatus = 'Downloading Scrcpy v4.1 archive...';
+    downloadStatus = 'Downloading Scrcpy $ver archive...';
     notifyListeners();
 
     try {
@@ -218,36 +265,44 @@ class AppState extends ChangeNotifier {
       await binDir.create(recursive: true);
 
       if (Platform.isWindows) {
-        final url = 'https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-win64-v4.1.zip';
+        final url = 'https://github.com/Genymobile/scrcpy/releases/download/$ver/scrcpy-win64-$ver.zip';
         final zipPath = p.join(binDir.path, 'scrcpy_temp.zip');
         
         final client = HttpClient();
         final req = await client.getUrl(Uri.parse(url));
         final resp = await req.close();
+        
+        if (resp.statusCode != 200) {
+          isDownloading = false;
+          downloadStatus = '❌ Release $ver not found or download failed (HTTP ${resp.statusCode})';
+          notifyListeners();
+          return false;
+        }
+
         final sink = File(zipPath).openWrite();
         await resp.pipe(sink);
 
-        downloadStatus = 'Extracting binaries...';
+        downloadStatus = 'Extracting Scrcpy $ver binaries...';
         notifyListeners();
 
         await Process.run('powershell', [
           '-Command',
           'Expand-Archive -Path "$zipPath" -DestinationPath "${binDir.path}\\temp_scrcpy" -Force; '
-          'Copy-Item -Path "${binDir.path}\\temp_scrcpy\\scrcpy-win64-v4.1\\*" -Destination "${binDir.path}" -Recurse -Force; '
+          'Get-ChildItem -Path "${binDir.path}\\temp_scrcpy" -Directory | ForEach-Object { Copy-Item -Path "$($_ .FullName)\\*" -Destination "${binDir.path}" -Recurse -Force }; '
           'Remove-Item -Path "$zipPath", "${binDir.path}\\temp_scrcpy" -Recurse -Force'
         ]);
       } else {
-        downloadStatus = 'Please install via package manager: brew install scrcpy / apt install scrcpy';
+        downloadStatus = 'Please install version $ver via brew or package manager.';
       }
 
       await _detectBinaries();
       isDownloading = false;
-      downloadStatus = isBinaryReady ? '✅ Scrcpy v4.1 installed successfully!' : '❌ Failed to configure binaries.';
+      downloadStatus = isBinaryReady ? '✅ Scrcpy $ver installed successfully!' : '❌ Failed to configure binaries.';
       notifyListeners();
       return isBinaryReady;
     } catch (e) {
       isDownloading = false;
-      downloadStatus = 'Error downloading: $e';
+      downloadStatus = 'Error downloading $ver: $e';
       notifyListeners();
       return false;
     }

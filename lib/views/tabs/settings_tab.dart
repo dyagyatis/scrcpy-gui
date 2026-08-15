@@ -35,7 +35,7 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Configure Scrcpy and ADB binary paths, auto-download tools, language, and updates.',
+            'Configure Scrcpy and ADB binary paths, choose and download any Scrcpy version, language, and updates.',
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 20),
@@ -69,7 +69,7 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
           const SizedBox(height: 16),
 
-          // 2. Binary Paths Card
+          // 2. Binary Paths & Version Downloader Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -82,7 +82,7 @@ class _SettingsTabState extends State<SettingsTab> {
               children: [
                 Row(
                   children: [
-                    const Text('⚙️ Scrcpy & ADB Executables', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const Text('⚙️ Scrcpy & ADB Binary Versions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -116,40 +116,69 @@ class _SettingsTabState extends State<SettingsTab> {
                     state.adb.adbPath = v;
                   },
                 ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.purpleAccent,
-                        foregroundColor: Colors.white,
+                const SizedBox(height: 16),
+
+                // Version Selector & Download Bar
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.bgInput,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppTheme.borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.history_rounded, size: 18, color: AppTheme.yellowAccent),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Select Version to Download:',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
-                      icon: const Icon(Icons.check_circle_outline, size: 16),
-                      label: Text(state.tr('test_availability')),
-                      onPressed: () async {
-                        final ok = await state.adb.isAvailable();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(ok ? '✅ Scrcpy & ADB are functional!' : '❌ Binaries not found.'),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.greenAccent,
-                        foregroundColor: Colors.white,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: state.availableScrcpyVersions.contains(state.selectedScrcpyVersion)
+                              ? state.selectedScrcpyVersion
+                              : state.availableScrcpyVersions.firstOrNull,
+                          decoration: const InputDecoration(isDense: true),
+                          dropdownColor: AppTheme.bgCard,
+                          items: state.availableScrcpyVersions.map((v) {
+                            return DropdownMenuItem(
+                              value: v,
+                              child: Text(
+                                '$v ${v == "v4.1" ? "(Latest / Android 15)" : ""}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (v) {
+                            if (v != null) state.setSelectedScrcpyVersion(v);
+                          },
+                        ),
                       ),
-                      icon: state.isDownloading
-                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.download_rounded, size: 16),
-                      label: Text(state.isDownloading ? state.tr('downloading') : state.tr('auto_download_btn')),
-                      onPressed: state.isDownloading ? null : () => state.downloadScrcpyBinaries(),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: state.isFetchingVersions
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.refresh_rounded, size: 16, color: AppTheme.purpleAccent),
+                        tooltip: 'Fetch releases from GitHub',
+                        onPressed: () => state.fetchAvailableScrcpyVersions(),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.greenAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ),
+                        icon: state.isDownloading
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.download_rounded, size: 16),
+                        label: Text(state.isDownloading ? state.tr('downloading') : '📥 Download ${state.selectedScrcpyVersion}'),
+                        onPressed: state.isDownloading ? null : () => state.downloadScrcpyBinaries(),
+                      ),
+                    ],
+                  ),
                 ),
                 if (state.downloadStatus.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -166,7 +195,32 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
           const SizedBox(height: 16),
 
-          // 3. About & Updates Card
+          // 3. Directories Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.bgCard,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text('📁 Default Save Folders', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                SizedBox(height: 12),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Screenshots Folder', hintText: '~/Pictures/ScrcpyScreenshots', isDense: true),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Screen Recordings Folder', hintText: '~/Videos/ScrcpyRecordings', isDense: true),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 4. About & Updates Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -180,10 +234,10 @@ class _SettingsTabState extends State<SettingsTab> {
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Scrcpy GUI Flutter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 2),
-                    Text('Version ${UpdateService.currentVersion} • Master Release', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  children: const [
+                    Text('Scrcpy GUI Flutter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                    SizedBox(height: 2),
+                    Text('Version 2.1.0 • Master Release', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                   ],
                 ),
                 const Spacer(),
