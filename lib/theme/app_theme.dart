@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const primaryColor = Color(0xFF3B82F6);
-  static const primaryHover = Color(0xFF60A5FA);
-  static const successColor = Color(0xFF10B981);
-  static const dangerColor = Color(0xFFEF4444);
-  static const warningColor = Color(0xFFF59E0B);
-  
-  static const bgDarkest = Color(0xFF0F1015);
-  static const bgDark = Color(0xFF13151B);
-  static const bgCard = Color(0xFF1A1D24);
-  static const bgInput = Color(0xFF12141A);
-  static const borderColor = Color(0xFF282C37);
+  // Backgrounds
+  static const bgDarkest = Color(0xFF0D0E12);
+  static const bgSidebar = Color(0xFF0F1117);
+  static const bgCard = Color(0xFF151821);
+  static const bgCardHeader = Color(0xFF191D28);
+  static const bgInput = Color(0xFF10121A);
+  static const borderColor = Color(0xFF232735);
+  static const borderHover = Color(0xFF3B4256);
+
+  // Accents
+  static const purpleAccent = Color(0xFF8B5CF6);
+  static const purpleActive = Color(0xFF4C1D95);
+  static const greenAccent = Color(0xFF10B981);
+  static const redAccent = Color(0xFFEF4444);
+  static const orangeAccent = Color(0xFFF97316);
+  static const yellowAccent = Color(0xFFF59E0B);
+  static const blueAccent = Color(0xFF3B82F6);
+
+  // Text
   static const textPrimary = Color(0xFFF8FAFC);
   static const textSecondary = Color(0xFF94A3B8);
+  static const textMuted = Color(0xFF64748B);
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -21,23 +30,24 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: bgDarkest,
       colorScheme: const ColorScheme.dark(
-        primary: primaryColor,
-        secondary: successColor,
+        primary: purpleAccent,
+        secondary: greenAccent,
         surface: bgCard,
-        error: dangerColor,
+        error: redAccent,
       ),
+      fontFamily: 'Segoe UI',
       cardTheme: CardThemeData(
         color: bgCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: borderColor),
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: borderColor, width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: bgInput,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
           borderSide: const BorderSide(color: borderColor),
@@ -48,27 +58,20 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: primaryColor),
+          borderSide: const BorderSide(color: purpleAccent, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+        labelStyle: const TextStyle(color: textMuted, fontSize: 12),
+        hintStyle: const TextStyle(color: textMuted, fontSize: 12),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF242936),
-          foregroundColor: textPrimary,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-            side: const BorderSide(color: Color(0xFF333A4C)),
-          ),
-        ),
-      ),
-      tabBarTheme: const TabBarThemeData(
-        labelColor: Color(0xFF60A5FA),
-        unselectedLabelColor: Color(0xFF94A3B8),
-        indicatorColor: primaryColor,
-        indicatorSize: TabBarIndicatorSize.tab,
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return purpleAccent;
+          }
+          return bgInput;
+        }),
+        side: const BorderSide(color: borderColor, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
     );
   }
