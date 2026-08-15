@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../services/update_service.dart';
 
-class SettingsTab extends StatelessWidget {
+class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
+
+  @override
+  State<SettingsTab> createState() => _SettingsTabState();
+}
+
+class _SettingsTabState extends State<SettingsTab> {
+  bool _isCheckingUpdate = false;
 
   @override
   Widget build(BuildContext context) {
@@ -16,23 +24,52 @@ class SettingsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.settings_outlined, color: AppTheme.purpleAccent, size: 24),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.settings_outlined, color: AppTheme.purpleAccent, size: 24),
+              const SizedBox(width: 10),
               Text(
-                'Application Settings',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                state.tr('settings'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ],
           ),
           const SizedBox(height: 6),
           const Text(
-            'Configure Scrcpy and ADB binary paths, auto-download tools, default folders, and application behavior.',
+            'Configure Scrcpy and ADB binary paths, auto-download tools, language, and updates.',
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 20),
 
-          // 1. Binary Paths Card
+          // 1. Language Selection Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.bgCard,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.language_rounded, size: 20, color: AppTheme.purpleAccent),
+                const SizedBox(width: 10),
+                Text(state.tr('language'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Spacer(),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'ru', label: Text('🇷🇺 Русский')),
+                    ButtonSegment(value: 'en', label: Text('🇬🇧 English')),
+                  ],
+                  selected: {state.language},
+                  onSelectionChanged: (set) {
+                    if (set.isNotEmpty) state.setLanguage(set.first);
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 2. Binary Paths Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -55,7 +92,7 @@ class SettingsTab extends StatelessWidget {
                         border: Border.all(color: state.isBinaryReady ? AppTheme.greenAccent : AppTheme.redAccent),
                       ),
                       child: Text(
-                        state.isBinaryReady ? '✅ Ready' : '⚠️ Missing',
+                        state.isBinaryReady ? '✅ ${state.tr("ready")}' : '⚠️ ${state.tr("missing")}',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: state.isBinaryReady ? AppTheme.greenAccent : AppTheme.redAccent),
                       ),
                     ),
@@ -88,13 +125,13 @@ class SettingsTab extends StatelessWidget {
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.check_circle_outline, size: 16),
-                      label: const Text('Test Availability'),
+                      label: Text(state.tr('test_availability')),
                       onPressed: () async {
                         final ok = await state.adb.isAvailable();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(ok ? '✅ Scrcpy & ADB are ready and functional!' : '❌ Binaries not found or failed to execute.'),
+                              content: Text(ok ? '✅ Scrcpy & ADB are functional!' : '❌ Binaries not found.'),
                             ),
                           );
                         }
@@ -109,7 +146,7 @@ class SettingsTab extends StatelessWidget {
                       icon: state.isDownloading
                           ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.download_rounded, size: 16),
-                      label: Text(state.isDownloading ? 'Downloading...' : '📥 1-Click Auto-Download Scrcpy v4.1'),
+                      label: Text(state.isDownloading ? state.tr('downloading') : state.tr('auto_download_btn')),
                       onPressed: state.isDownloading ? null : () => state.downloadScrcpyBinaries(),
                     ),
                   ],
@@ -129,32 +166,7 @@ class SettingsTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // 2. Directories Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.bgCard,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('📁 Default Save Folders', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                SizedBox(height: 12),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Screenshots Folder', hintText: '~/Pictures/ScrcpyScreenshots', isDense: true),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Screen Recordings Folder', hintText: '~/Videos/ScrcpyRecordings', isDense: true),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 3. About Card
+          // 3. About & Updates Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -168,11 +180,24 @@ class SettingsTab extends StatelessWidget {
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Scrcpy GUI Flutter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                    SizedBox(height: 2),
-                    Text('Version 1.3.0 • Cross-Platform (Windows, Linux, macOS)', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  children: [
+                    const Text('Scrcpy GUI Flutter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const SizedBox(height: 2),
+                    Text('Version ${UpdateService.currentVersion} • Master Release', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                   ],
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.bgInput,
+                    foregroundColor: AppTheme.purpleAccent,
+                    side: const BorderSide(color: AppTheme.purpleAccent),
+                  ),
+                  icon: _isCheckingUpdate
+                      ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.update_rounded, size: 16),
+                  label: Text(state.tr('check_updates')),
+                  onPressed: _isCheckingUpdate ? null : () => _checkForUpdates(state),
                 ),
               ],
             ),
@@ -180,5 +205,31 @@ class SettingsTab extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _checkForUpdates(AppState state) async {
+    setState(() => _isCheckingUpdate = true);
+    final info = await state.updater.checkForUpdates();
+    if (mounted) {
+      setState(() => _isCheckingUpdate = false);
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppTheme.bgCard,
+          title: Text(info.hasUpdate ? '🎉 New Version Available!' : '✅ Up to Date'),
+          content: Text(
+            info.hasUpdate
+                ? 'Latest release: ${info.tagName}\nYou are currently on: ${UpdateService.currentVersion}\n\nVisit GitHub Releases to download.'
+                : 'You are using the latest version of Scrcpy GUI (${UpdateService.currentVersion})!',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

@@ -40,9 +40,9 @@ class CommandCard extends StatelessWidget {
               children: [
                 const Icon(Icons.terminal_rounded, size: 18, color: AppTheme.purpleAccent),
                 const SizedBox(width: 8),
-                const Text(
-                  'Command',
-                  style: TextStyle(
+                Text(
+                  state.tr('command'),
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.purpleAccent,
@@ -57,14 +57,14 @@ class CommandCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: AppTheme.yellowAccent, width: 0.5),
                     ),
-                    child: const Text(
-                      '📷 WEBCAM MODE',
-                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.yellowAccent),
+                    child: Text(
+                      state.tr('webcam_mode'),
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.yellowAccent),
                     ),
                   ),
                 ],
                 const Spacer(),
-                // Battery & Device Info Pill in header
+                // Battery & Device Info Pill
                 if (currentDev != null) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -79,7 +79,7 @@ class CommandCard extends StatelessWidget {
                         Text(
                           currentDev.batteryLevel != null
                               ? '${currentDev.isCharging ? "⚡" : "🔋"} ${currentDev.batteryLevel}%'
-                              : '📱 Connected',
+                              : '📱 ${state.tr("connected")}',
                           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.greenAccent),
                         ),
                         if (currentDev.androidVersion != null) ...[
@@ -93,7 +93,32 @@ class CommandCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                 ],
+                // Language Switcher Toggle Pill
+                InkWell(
+                  onTap: () {
+                    state.setLanguage(state.language == 'ru' ? 'en' : 'ru');
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgInput,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.purpleAccent.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          state.language == 'ru' ? '🇷🇺 RU' : '🇬🇧 EN',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.purpleAccent),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -130,13 +155,13 @@ class CommandCard extends StatelessWidget {
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: state.commandPreview));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Command copied to clipboard')),
+                            SnackBar(content: Text(state.tr('copy_cmd'))),
                           );
                         },
                       ),
                       IconButton(
                         icon: const Icon(Icons.download_rounded, size: 16, color: AppTheme.textSecondary),
-                        tooltip: 'Save preset',
+                        tooltip: state.tr('save_preset'),
                         onPressed: onFavorite,
                       ),
                     ],
@@ -162,7 +187,7 @@ class CommandCard extends StatelessWidget {
                           child: DropdownButton<String>(
                             value: state.selectedSerial,
                             isExpanded: true,
-                            hint: const Text('Select Device', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                            hint: Text(state.tr('select_device'), style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
                             dropdownColor: AppTheme.bgCard,
                             items: state.devices.map((dev) {
                               return DropdownMenuItem<String>(
@@ -221,7 +246,7 @@ class CommandCard extends StatelessWidget {
                             minimumSize: Size.zero,
                           ),
                           icon: const Icon(Icons.devices_other, size: 14),
-                          label: const Text('Launch All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          label: Text(state.tr('launch_all'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                           onPressed: () => state.launchAllDevices(),
                         ),
                       ),

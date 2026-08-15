@@ -8,12 +8,16 @@ import '../models/preset.dart';
 import '../services/adb_service.dart';
 import '../services/scrcpy_service.dart';
 import '../services/config_service.dart';
+import '../services/update_service.dart';
+import '../services/localization_service.dart';
 
 class AppState extends ChangeNotifier {
   final AdbService adb = AdbService();
   final ScrcpyService scrcpy = ScrcpyService();
   final ConfigService configService = ConfigService();
+  final UpdateService updater = UpdateService();
 
+  String language = 'ru'; // 'ru' or 'en'
   List<AndroidDevice> devices = [];
   String? selectedSerial;
   ScrcpyConfig config = ScrcpyConfig();
@@ -31,6 +35,8 @@ class AppState extends ChangeNotifier {
   AppState() {
     _init();
   }
+
+  String tr(String key) => I18n.t(key, language);
 
   Future<void> _init() async {
     await _detectBinaries();
@@ -65,6 +71,9 @@ class AppState extends ChangeNotifier {
 
   Future<void> _loadConfig() async {
     final data = await configService.load();
+    if (data.containsKey('language')) {
+      language = data['language'];
+    }
     if (data.containsKey('config')) {
       config = ScrcpyConfig.fromJson(data['config']);
     }
@@ -79,6 +88,12 @@ class AppState extends ChangeNotifier {
           .map((item) => Preset.fromJson(item))
           .toList();
     }
+    notifyListeners();
+  }
+
+  Future<void> setLanguage(String lang) async {
+    language = lang;
+    await saveSettings();
     notifyListeners();
   }
 
@@ -203,7 +218,6 @@ class AppState extends ChangeNotifier {
       await binDir.create(recursive: true);
 
       if (Platform.isWindows) {
-        // Download Win64 Scrcpy
         final url = 'https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-win64-v4.1.zip';
         final zipPath = p.join(binDir.path, 'scrcpy_temp.zip');
         
@@ -216,7 +230,6 @@ class AppState extends ChangeNotifier {
         downloadStatus = 'Extracting binaries...';
         notifyListeners();
 
-        // Extract with PowerShell
         await Process.run('powershell', [
           '-Command',
           'Expand-Archive -Path "$zipPath" -DestinationPath "${binDir.path}\\temp_scrcpy" -Force; '
@@ -224,7 +237,6 @@ class AppState extends ChangeNotifier {
           'Remove-Item -Path "$zipPath", "${binDir.path}\\temp_scrcpy" -Recurse -Force'
         ]);
       } else {
-        // Linux / macOS: check package manager or download
         downloadStatus = 'Please install via package manager: brew install scrcpy / apt install scrcpy';
       }
 
