@@ -1,0 +1,68 @@
+name: Build Windows Release (Flutter)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows Desktop Support
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows Application (Release)
+        run: flutter build windows --release
+
+      - name: Bundle with Scrcpy and ADB binaries
+        shell: pwsh
+        run: |
+          $buildDir = "build\windows\x64\runner\Release"
+          if (!(Test-Path "bin\scrcpy.exe")) {
+            Write-Host "Downloading Scrcpy win64 release..."
+            $url = "https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-win64-v4.1.zip"
+            Invoke-WebRequest -Uri $url -OutFile "scrcpy.zip"
+            Expand-Archive -Path "scrcpy.zip" -DestinationPath "temp_scrcpy"
+            New-Item -ItemType Directory -Force -Path "bin"
+            Copy-Item -Path "temp_scrcpy\scrcpy-win64-v4.1\*" -Destination "bin" -Recurse -Force
+          }
+          
+          # Copy bin folder next to the generated executable
+          Copy-Item -Path "bin" -Destination "$buildDir\bin" -Recurse -Force
+          
+          # Create zip archive
+          Compress-Archive -Path "$buildDir\*" -DestinationPath "Scrcpy-GUI-Flutter-Windows.zip" -Force
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Scrcpy-GUI-Flutter-Windows
+          path: Scrcpy-GUI-Flutter-Windows.zip
+          retention-days: 30
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Scrcpy-GUI-Flutter-Windows.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
