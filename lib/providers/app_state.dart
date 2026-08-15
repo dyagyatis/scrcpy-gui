@@ -285,12 +285,10 @@ class AppState extends ChangeNotifier {
         downloadStatus = 'Extracting Scrcpy $ver binaries...';
         notifyListeners();
 
-        await Process.run('powershell', [
-          '-Command',
-          'Expand-Archive -Path "$zipPath" -DestinationPath "${binDir.path}\\temp_scrcpy" -Force; '
-          'Get-ChildItem -Path "${binDir.path}\\temp_scrcpy" -Directory | ForEach-Object { Copy-Item -Path "$($_ .FullName)\\*" -Destination "${binDir.path}" -Recurse -Force }; '
-          'Remove-Item -Path "$zipPath", "${binDir.path}\\temp_scrcpy" -Recurse -Force'
-        ]);
+        final psScript = 'Expand-Archive -Path "$zipPath" -DestinationPath "${binDir.path}\\temp_scrcpy" -Force; '
+            r'Get-ChildItem -Path "' + binDir.path + r'\temp_scrcpy" -Directory | ForEach-Object { Copy-Item -Path "$($_.FullName)\*" -Destination "' + binDir.path + r'" -Recurse -Force }; '
+            'Remove-Item -Path "$zipPath", "${binDir.path}\\temp_scrcpy" -Recurse -Force';
+        await Process.run('powershell', ['-Command', psScript]);
       } else {
         downloadStatus = 'Please install version $ver via brew or package manager.';
       }
