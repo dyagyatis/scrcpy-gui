@@ -14,7 +14,7 @@ class SidebarNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
+      width: 76,
       decoration: const BoxDecoration(
         color: AppTheme.bgSidebar,
         border: Border(right: BorderSide(color: AppTheme.borderColor, width: 1)),
@@ -38,15 +38,14 @@ class SidebarNav extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Nav items
+          // Nav items (Resources removed!)
           _buildNavItem(0, Icons.home_rounded, 'Home'),
           _buildNavItem(1, Icons.favorite_border_rounded, 'Favorites'),
           _buildNavItem(2, Icons.grid_view_rounded, 'App Drawer', badge: 'BETA'),
           _buildNavItem(3, Icons.code_rounded, 'Scripts'),
-          _buildNavItem(4, Icons.folder_open_rounded, 'Resources'),
-          _buildNavItem(5, Icons.keyboard_alt_outlined, 'Shortcuts'),
+          _buildNavItem(4, Icons.keyboard_alt_outlined, 'Shortcuts'),
           const Spacer(),
-          _buildNavItem(6, Icons.settings_outlined, 'Settings'),
+          _buildNavItem(5, Icons.settings_outlined, 'Settings'),
           const SizedBox(height: 12),
         ],
       ),
@@ -62,7 +61,7 @@ class SidebarNav extends StatelessWidget {
         onTap: () => onDestinationSelected(index),
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 60,
+          width: 64,
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.purpleActive.withOpacity(0.4) : Colors.transparent,

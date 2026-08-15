@@ -120,11 +120,17 @@ jobs:
       - name: Build macOS Application (Release)
         run: flutter build macos --release
 
+      - name: Package macOS Application (Exclude dSYM Debug Symbols)
+        run: |
+          mkdir -p release-macos
+          cp -R build/macos/Build/Products/Release/*.app release-macos/
+          rm -rf release-macos/*.dSYM
+
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Scrcpy-GUI-Flutter-macOS
-          path: build/macos/Build/Products/Release/
+          path: release-macos/
           retention-days: 30
 
   release:
