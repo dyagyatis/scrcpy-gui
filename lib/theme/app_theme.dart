@@ -19,6 +19,12 @@ class AppTheme {
   static const yellowAccent = Color(0xFFF59E0B);
   static const blueAccent = Color(0xFF3B82F6);
 
+  // Aliases
+  static const primaryColor = purpleAccent;
+  static const successColor = greenAccent;
+  static const dangerColor = redAccent;
+  static const warningColor = yellowAccent;
+
   // Text
   static const textPrimary = Color(0xFFF8FAFC);
   static const textSecondary = Color(0xFF94A3B8);
