@@ -26,7 +26,7 @@ class AppTheme {
         surface: bgCard,
         error: dangerColor,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: bgCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -64,7 +64,7 @@ class AppTheme {
           ),
         ),
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: Color(0xFF60A5FA),
         unselectedLabelColor: Color(0xFF94A3B8),
         indicatorColor: primaryColor,

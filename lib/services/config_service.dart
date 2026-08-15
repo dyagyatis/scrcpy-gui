@@ -6,10 +6,15 @@ class ConfigService {
   final String _configFile;
 
   ConfigService([String? filePath])
-      : _configFile = filePath ??
-            Platform.environment['USERPROFILE'] != null
-                ? '${Platform.environment['USERPROFILE']}/.scrcpy_flutter_config.json'
-                : 'config.json';
+      : _configFile = filePath ?? _getDefaultConfigPath();
+
+  static String _getDefaultConfigPath() {
+    final home = Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'];
+    if (home != null && home.isNotEmpty) {
+      return '$home/.scrcpy_flutter_config.json';
+    }
+    return 'config.json';
+  }
 
   Future<Map<String, dynamic>> load() async {
     try {

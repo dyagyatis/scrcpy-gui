@@ -109,7 +109,7 @@ class _RecordSettingsViewState extends State<RecordSettingsView> {
                         : () async {
                             final serial = state.selectedSerial!;
                             final now = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-                            final home = Platform.environment['USERPROFILE'] ?? '.';
+                            final home = Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'] ?? '.';
                             final path = '$home/Pictures/ScrcpyScreenshots/scrcpy_${serial.replaceAll(':', '_')}_$now.png';
                             setState(() => _screenshotStatus = '⏳ Сохранение...');
                             final res = await state.adb.takeScreenshot(serial, path);

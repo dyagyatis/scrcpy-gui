@@ -131,7 +131,7 @@ jobs:
       - name: Package macOS Application
         run: |
           cd build/macos/Build/Products/Release
-          zip -r ../../../../../Scrcpy-GUI-Flutter-macOS.zip Scrcpy-GUI-Flutter.app || zip -r ../../../../../Scrcpy-GUI-Flutter-macOS.zip *.app
+          zip -r -y ../../../../../Scrcpy-GUI-Flutter-macOS.zip *.app
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
