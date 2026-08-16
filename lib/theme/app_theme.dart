@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 
+enum AppThemeMode {
+  dark,
+  light,
+  oled,
+  system,
+}
+
 enum AppAccentColor {
   purple,
   cyan,
   emerald,
   orange,
   crimson,
+  system,
 }
 
 class AppTheme {
-  // Backgrounds
+  // Backgrounds - Dark
   static const bgDarkest = Color(0xFF0D0E12);
   static const bgOled = Color(0xFF000000);
   static const bgSidebar = Color(0xFF0F1117);
@@ -19,7 +27,14 @@ class AppTheme {
   static const borderColor = Color(0xFF232735);
   static const borderHover = Color(0xFF3B4256);
 
-  // Default Accents
+  // Backgrounds - Light
+  static const bgLight = Color(0xFFF1F5F9);
+  static const bgLightSidebar = Color(0xFFE2E8F0);
+  static const bgLightCard = Color(0xFFFFFFFF);
+  static const bgLightInput = Color(0xFFF8FAFC);
+  static const borderLight = Color(0xFFCBD5E1);
+
+  // Accents Palette
   static const purpleAccent = Color(0xFF8B5CF6);
   static const purpleActive = Color(0xFF4C1D95);
   static const greenAccent = Color(0xFF10B981);
@@ -28,17 +43,20 @@ class AppTheme {
   static const yellowAccent = Color(0xFFF59E0B);
   static const blueAccent = Color(0xFF3B82F6);
   static const cyanAccent = Color(0xFF06B6D4);
+  static const systemBlue = Color(0xFF0078D4); // Windows Modern Fluent Accent
 
-  // Dynamic Aliases (updated based on active accent)
+  // Static Aliases
   static Color primaryColor = purpleAccent;
   static const successColor = greenAccent;
   static const dangerColor = redAccent;
   static const warningColor = yellowAccent;
 
   // Text
-  static const textPrimary = Color(0xFFF8FAFC);
-  static const textSecondary = Color(0xFF94A3B8);
+  static const textPrimaryDark = Color(0xFFF8FAFC);
+  static const textSecondaryDark = Color(0xFF94A3B8);
   static const textMuted = Color(0xFF64748B);
+  static const textPrimaryLight = Color(0xFF0F172A);
+  static const textSecondaryLight = Color(0xFF475569);
 
   static Color getAccentColor(AppAccentColor accent) {
     switch (accent) {
@@ -52,54 +70,72 @@ class AppTheme {
         return orangeAccent;
       case AppAccentColor.crimson:
         return redAccent;
+      case AppAccentColor.system:
+        return systemBlue;
     }
   }
 
   static ThemeData createTheme({
+    AppThemeMode themeMode = AppThemeMode.dark,
     AppAccentColor accent = AppAccentColor.purple,
-    bool isOled = false,
   }) {
     final activeAccent = getAccentColor(accent);
     primaryColor = activeAccent;
-    final scaffoldBg = isOled ? bgOled : bgDarkest;
-    final cardBg = isOled ? bgCardOled : bgCard;
+
+    final isLight = themeMode == AppThemeMode.light;
+    final isOled = themeMode == AppThemeMode.oled;
+
+    final scaffoldBg = isLight ? bgLight : (isOled ? bgOled : bgDarkest);
+    final cardBg = isLight ? bgLightCard : (isOled ? bgCardOled : bgCard);
+    final inputBg = isLight ? bgLightInput : bgInput;
+    final border = isLight ? borderLight : borderColor;
+    final textPrim = isLight ? textPrimaryLight : textPrimaryDark;
+    final textSec = isLight ? textSecondaryLight : textSecondaryDark;
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: isLight ? Brightness.light : Brightness.dark,
       scaffoldBackgroundColor: scaffoldBg,
-      colorScheme: ColorScheme.dark(
-        primary: activeAccent,
-        secondary: greenAccent,
-        surface: cardBg,
-        error: redAccent,
-      ),
+      primaryColor: activeAccent,
+      colorScheme: isLight
+          ? ColorScheme.light(
+              primary: activeAccent,
+              secondary: greenAccent,
+              surface: cardBg,
+              error: redAccent,
+            )
+          : ColorScheme.dark(
+              primary: activeAccent,
+              secondary: greenAccent,
+              surface: cardBg,
+              error: redAccent,
+            ),
       fontFamily: 'Segoe UI',
       cardTheme: CardThemeData(
         color: cardBg,
-        elevation: 0,
+        elevation: isLight ? 1 : 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: borderColor, width: 1),
+          side: BorderSide(color: border, width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: bgInput,
+        fillColor: inputBg,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: borderColor),
+          borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: borderColor),
+          borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(color: activeAccent, width: 1.5),
         ),
-        labelStyle: const TextStyle(color: textMuted, fontSize: 12),
+        labelStyle: TextStyle(color: textSec, fontSize: 12),
         hintStyle: const TextStyle(color: textMuted, fontSize: 12),
       ),
       checkboxTheme: CheckboxThemeData(
@@ -107,10 +143,19 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return activeAccent;
           }
-          return bgInput;
+          return inputBg;
         }),
-        side: const BorderSide(color: borderColor, width: 1.5),
+        side: BorderSide(color: border, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: activeAccent,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
       ),
     );
   }
