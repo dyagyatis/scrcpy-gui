@@ -52,9 +52,11 @@ class AppTheme {
   static const warningColor = yellowAccent;
 
   // Text
+  static const textPrimary = Color(0xFFF8FAFC);
+  static const textSecondary = Color(0xFF94A3B8);
+  static const textMuted = Color(0xFF64748B);
   static const textPrimaryDark = Color(0xFFF8FAFC);
   static const textSecondaryDark = Color(0xFF94A3B8);
-  static const textMuted = Color(0xFF64748B);
   static const textPrimaryLight = Color(0xFF0F172A);
   static const textSecondaryLight = Color(0xFF475569);
 
@@ -78,15 +80,16 @@ class AppTheme {
   static ThemeData createTheme({
     AppThemeMode themeMode = AppThemeMode.dark,
     AppAccentColor accent = AppAccentColor.purple,
+    bool isOled = false,
   }) {
     final activeAccent = getAccentColor(accent);
     primaryColor = activeAccent;
 
     final isLight = themeMode == AppThemeMode.light;
-    final isOled = themeMode == AppThemeMode.oled;
+    final effectiveOled = isOled || (themeMode == AppThemeMode.oled);
 
-    final scaffoldBg = isLight ? bgLight : (isOled ? bgOled : bgDarkest);
-    final cardBg = isLight ? bgLightCard : (isOled ? bgCardOled : bgCard);
+    final scaffoldBg = isLight ? bgLight : (effectiveOled ? bgOled : bgDarkest);
+    final cardBg = isLight ? bgLightCard : (effectiveOled ? bgCardOled : bgCard);
     final inputBg = isLight ? bgLightInput : bgInput;
     final border = isLight ? borderLight : borderColor;
     final textPrim = isLight ? textPrimaryLight : textPrimaryDark;
