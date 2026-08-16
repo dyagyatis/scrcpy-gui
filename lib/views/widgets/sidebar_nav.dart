@@ -24,11 +24,11 @@ class _SidebarNavState extends State<SidebarNav> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final accent = AppTheme.getAccentColor(state.activeAccent);
-    final width = _isExpanded ? 200.0 : 76.0;
+    final width = _isExpanded ? 200.0 : 78.0;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       width: width,
       decoration: BoxDecoration(
         color: state.isOledMode ? AppTheme.bgOled : AppTheme.bgSidebar,
@@ -36,58 +36,62 @@ class _SidebarNavState extends State<SidebarNav> {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 10),
-          // Sidebar Top Header: Expand / Collapse Toggle + Logo
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: _isExpanded ? MainAxisAlignment.spaceBetween : MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: accent.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: accent.withOpacity(0.5), width: 1.5),
+          const SizedBox(height: 12),
+          // Sidebar Top Header
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: accent.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: accent.withOpacity(0.5), width: 1.5),
+                    ),
+                    child: Icon(Icons.smartphone_rounded, color: accent, size: 18),
                   ),
-                  child: Icon(
-                    Icons.smartphone_rounded,
-                    color: accent,
-                    size: 20,
-                  ),
-                ),
-                if (_isExpanded) ...[
                   const SizedBox(width: 8),
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'Scrcpy GUI',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).brightness == Brightness.light ? Colors.black87 : Colors.white,
-                      ),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ],
-                IconButton(
-                  icon: Icon(
-                    _isExpanded ? Icons.menu_open_rounded : Icons.menu_rounded,
-                    color: AppTheme.textSecondary,
-                    size: 18,
+                  InkWell(
+                    onTap: () => setState(() => _isExpanded = false),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.chevron_left_rounded, size: 20, color: AppTheme.textSecondary),
+                    ),
                   ),
-                  tooltip: _isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar',
-                  onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                ],
+              ),
+            )
+          else
+            InkWell(
+              onTap: () => setState(() => _isExpanded = true),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: accent.withOpacity(0.4), width: 1.5),
                 ),
-              ],
+                child: Icon(Icons.smartphone_rounded, color: accent, size: 22),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           const Divider(color: AppTheme.borderColor, height: 1),
           const SizedBox(height: 8),
 
-          // Nav items list
+          // Navigation items list
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -179,48 +183,64 @@ class _SidebarItemWidgetState extends State<_SidebarItemWidget> {
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
           padding: EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: widget.isExpanded ? 12 : 6,
+            vertical: widget.isExpanded ? 8 : 6,
+            horizontal: widget.isExpanded ? 10 : 4,
           ),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(8),
             border: border,
           ),
-          child: Row(
-            mainAxisAlignment: widget.isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              Icon(widget.icon, size: 20, color: iconColor),
-              if (widget.isExpanded) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: widget.isSelected ? Colors.white : AppTheme.textPrimaryDark,
+          child: widget.isExpanded
+              ? Row(
+                  children: [
+                    Icon(widget.icon, size: 20, color: iconColor),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: widget.isSelected ? Colors.white : AppTheme.textPrimaryDark,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    if (widget.badge != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppTheme.yellowAccent.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppTheme.yellowAccent, width: 0.5),
+                        ),
+                        child: Text(
+                          widget.badge!,
+                          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppTheme.yellowAccent),
+                        ),
+                      ),
+                    ],
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(widget.icon, size: 20, color: iconColor),
+                    const SizedBox(height: 3),
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: widget.isSelected ? Colors.white : AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
                 ),
-                if (widget.badge != null) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppTheme.yellowAccent.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppTheme.yellowAccent, width: 0.5),
-                    ),
-                    child: Text(
-                      widget.badge!,
-                      style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppTheme.yellowAccent),
-                    ),
-                  ),
-                ],
-              ],
-            ],
-          ),
         ),
       ),
     );
