@@ -9,6 +9,8 @@ class ConfigService {
   ConfigService([String? filePath])
       : _configFile = filePath ?? _getDefaultConfigPath();
 
+  String get configFile => _configFile;
+
   static String _getDefaultConfigPath() {
     final home = Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'];
     if (home != null && home.isNotEmpty) {

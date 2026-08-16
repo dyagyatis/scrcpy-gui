@@ -1,7 +1,7 @@
 name: scrcpy_flutter_gui
-description: "A modern, powerful Flutter GUI for Scrcpy with multi-device control, wireless ADB, webcam mode, and customizable presets."
+description: "A modern, powerful Flutter GUI for Scrcpy with keymapping, file explorer, device monitor, multi-device control, wireless ADB, webcam mode, and customizable presets."
 publish_to: 'none'
-version: 2.0.0+1
+version: 3.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

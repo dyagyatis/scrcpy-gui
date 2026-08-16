@@ -14,7 +14,7 @@ class SidebarNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 76,
+      width: 78,
       decoration: const BoxDecoration(
         color: AppTheme.bgSidebar,
         border: Border(right: BorderSide(color: AppTheme.borderColor, width: 1)),
@@ -37,16 +37,28 @@ class SidebarNav extends StatelessWidget {
               size: 22,
             ),
           ),
-          const SizedBox(height: 16),
-          // Nav items (Resources removed!)
-          _buildNavItem(0, Icons.home_rounded, 'Home'),
-          _buildNavItem(1, Icons.favorite_border_rounded, 'Favorites'),
-          _buildNavItem(2, Icons.grid_view_rounded, 'App Drawer', badge: 'BETA'),
-          _buildNavItem(3, Icons.code_rounded, 'Scripts'),
-          _buildNavItem(4, Icons.keyboard_alt_outlined, 'Shortcuts'),
-          const Spacer(),
-          _buildNavItem(5, Icons.settings_outlined, 'Settings'),
           const SizedBox(height: 12),
+          // Nav items
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildNavItem(0, Icons.home_rounded, 'Home'),
+                  _buildNavItem(1, Icons.favorite_border_rounded, 'Favorites'),
+                  _buildNavItem(2, Icons.sports_esports_rounded, 'Keymap'),
+                  _buildNavItem(3, Icons.folder_shared_rounded, 'Files'),
+                  _buildNavItem(4, Icons.analytics_rounded, 'Monitor'),
+                  _buildNavItem(5, Icons.grid_view_rounded, 'Apps', badge: 'BETA'),
+                  _buildNavItem(6, Icons.code_rounded, 'Scripts'),
+                  _buildNavItem(7, Icons.keyboard_alt_outlined, 'Shortcuts'),
+                ],
+              ),
+            ),
+          ),
+          const Divider(color: AppTheme.borderColor, height: 1),
+          const SizedBox(height: 4),
+          _buildNavItem(8, Icons.settings_outlined, 'Settings'),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -56,13 +68,13 @@ class SidebarNav extends StatelessWidget {
     final isSelected = selectedIndex == index;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
       child: InkWell(
         onTap: () => onDestinationSelected(index),
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 64,
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          width: 66,
+          padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.purpleActive.withOpacity(0.4) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
@@ -75,10 +87,10 @@ class SidebarNav extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 20,
+                size: 19,
                 color: isSelected ? AppTheme.purpleAccent : AppTheme.textSecondary,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(
                 label,
                 style: TextStyle(
@@ -100,7 +112,7 @@ class SidebarNav extends StatelessWidget {
                   child: Text(
                     badge,
                     style: const TextStyle(
-                      fontSize: 8,
+                      fontSize: 7,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.yellowAccent,
                     ),

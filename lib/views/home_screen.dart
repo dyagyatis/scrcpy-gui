@@ -10,6 +10,9 @@ import 'widgets/audio_card.dart';
 import 'widgets/virtual_display_card.dart';
 import 'widgets/recording_card.dart';
 import 'tabs/favorites_tab.dart';
+import 'tabs/keymapper_tab.dart';
+import 'tabs/files_tab.dart';
+import 'tabs/monitor_tab.dart';
 import 'tabs/app_drawer_tab.dart';
 import 'tabs/scripts_tab.dart';
 import 'tabs/shortcuts_tab.dart';
@@ -31,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final state = context.watch<AppState>();
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDarkest,
+      backgroundColor: state.isOledMode ? AppTheme.bgOled : AppTheme.bgDarkest,
       body: Row(
         children: [
           // 1. Left Sidebar Navigation
@@ -87,24 +90,34 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                // Active View Switcher
+                // Active View Switcher (9 Tabs)
                 Expanded(
-                  child: IndexedStack(
-                    index: _selectedNavIndex,
-                    children: [
-                      // 0: Home Dashboard
-                      _buildHomeDashboard(context),
-                      // 1: Favorites
-                      const FavoritesTab(),
-                      // 2: App Drawer
-                      const AppDrawerTab(),
-                      // 3: Scripts
-                      const ScriptsTab(),
-                      // 4: Shortcuts
-                      const ShortcutsTab(),
-                      // 5: Settings
-                      const SettingsTab(),
-                    ],
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: IndexedStack(
+                      key: ValueKey<int>(_selectedNavIndex),
+                      index: _selectedNavIndex,
+                      children: [
+                        // 0: Home Dashboard
+                        _buildHomeDashboard(context),
+                        // 1: Favorites
+                        const FavoritesTab(),
+                        // 2: Keymapper
+                        const KeymapperTab(),
+                        // 3: Files Explorer
+                        const FilesTab(),
+                        // 4: Monitor Diagnostics
+                        const MonitorTab(),
+                        // 5: App Drawer
+                        const AppDrawerTab(),
+                        // 6: Scripts
+                        const ScriptsTab(),
+                        // 7: Shortcuts
+                        const ShortcutsTab(),
+                        // 8: Settings
+                        const SettingsTab(),
+                      ],
+                    ),
                   ),
                 ),
               ],

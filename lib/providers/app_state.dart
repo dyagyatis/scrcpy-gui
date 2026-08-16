@@ -11,6 +11,7 @@ import '../services/scrcpy_service.dart';
 import '../services/config_service.dart';
 import '../services/update_service.dart';
 import '../services/localization_service.dart';
+import '../theme/app_theme.dart';
 
 class AppState extends ChangeNotifier {
   final AdbService adb = AdbService();
@@ -19,6 +20,9 @@ class AppState extends ChangeNotifier {
   final UpdateService updater = UpdateService();
 
   String language = 'ru'; // 'ru' or 'en'
+  AppAccentColor activeAccent = AppAccentColor.purple;
+  bool isOledMode = false;
+
   List<AndroidDevice> devices = [];
   String? selectedSerial;
   ScrcpyConfig config = ScrcpyConfig();
@@ -41,6 +45,8 @@ class AppState extends ChangeNotifier {
   AppState() {
     _init();
   }
+
+  ThemeData get theme => AppTheme.createTheme(accent: activeAccent, isOled: isOledMode);
 
   String tr(String key) => I18n.t(key, language);
 
@@ -81,6 +87,16 @@ class AppState extends ChangeNotifier {
     if (data.containsKey('language')) {
       language = data['language'];
     }
+    if (data.containsKey('accent')) {
+      final accStr = data['accent'] as String;
+      activeAccent = AppAccentColor.values.firstWhere(
+        (a) => a.name == accStr,
+        orElse: () => AppAccentColor.purple,
+      );
+    }
+    if (data.containsKey('isOledMode')) {
+      isOledMode = data['isOledMode'] ?? false;
+    }
     if (data.containsKey('selectedScrcpyVersion')) {
       selectedScrcpyVersion = data['selectedScrcpyVersion'];
     }
@@ -103,6 +119,18 @@ class AppState extends ChangeNotifier {
 
   Future<void> setLanguage(String lang) async {
     language = lang;
+    await saveSettings();
+    notifyListeners();
+  }
+
+  Future<void> setAccent(AppAccentColor accent) async {
+    activeAccent = accent;
+    await saveSettings();
+    notifyListeners();
+  }
+
+  Future<void> setOledMode(bool oled) async {
+    isOledMode = oled;
     await saveSettings();
     notifyListeners();
   }
@@ -144,12 +172,21 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> saveSettings() async {
-    await configService.save(
-      config: config,
-      recentIps: recentIps,
-      selectedPreset: selectedPreset,
-      customPresets: userPresets,
-    );
+    try {
+      final file = File(configService.configFile);
+      await file.parent.create(recursive: true);
+      final data = {
+        'language': language,
+        'accent': activeAccent.name,
+        'isOledMode': isOledMode,
+        'selectedScrcpyVersion': selectedScrcpyVersion,
+        'config': config.toJson(),
+        'recentIps': recentIps,
+        'selectedPreset': selectedPreset,
+        'customPresets': userPresets.map((p) => p.toJson()).toList(),
+      };
+      await file.writeAsString(const JsonEncoder.withIndent('  ').convert(data));
+    } catch (_) {}
     notifyListeners();
   }
 

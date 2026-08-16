@@ -35,12 +35,12 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Configure Scrcpy and ADB binary paths, choose and download any Scrcpy version, language, and updates.',
+            'Configure Scrcpy and ADB binary paths, choose and download any Scrcpy version, theme accents, language, and updates.',
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 20),
 
-          // 1. Language Selection Card
+          // 1. Language & Theme Customization Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -48,21 +48,73 @@ class _SettingsTabState extends State<SettingsTab> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppTheme.borderColor),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.language_rounded, size: 20, color: AppTheme.purpleAccent),
-                const SizedBox(width: 10),
-                Text(state.tr('language'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                const Spacer(),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'ru', label: Text('🇷🇺 Русский')),
-                    ButtonSegment(value: 'en', label: Text('🇬🇧 English')),
+                const Text('🎨 Interface & Theme Customization', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 14),
+                // Language selector
+                Row(
+                  children: [
+                    const Icon(Icons.language_rounded, size: 18, color: AppTheme.purpleAccent),
+                    const SizedBox(width: 8),
+                    Text(state.tr('language'), style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary)),
+                    const Spacer(),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'ru', label: Text('🇷🇺 Русский')),
+                        ButtonSegment(value: 'en', label: Text('🇬🇧 English')),
+                      ],
+                      selected: {state.language},
+                      onSelectionChanged: (set) {
+                        if (set.isNotEmpty) state.setLanguage(set.first);
+                      },
+                    ),
                   ],
-                  selected: {state.language},
-                  onSelectionChanged: (set) {
-                    if (set.isNotEmpty) state.setLanguage(set.first);
-                  },
+                ),
+                const Divider(color: AppTheme.borderColor, height: 24),
+                // Accent color selector
+                Row(
+                  children: [
+                    const Icon(Icons.color_lens_outlined, size: 18, color: AppTheme.cyanAccent),
+                    const SizedBox(width: 8),
+                    Text(state.tr('accent_color'), style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary)),
+                    const Spacer(),
+                    Wrap(
+                      spacing: 8,
+                      children: AppAccentColor.values.map((accent) {
+                        final col = AppTheme.getAccentColor(accent);
+                        final isSel = state.activeAccent == accent;
+                        return InkWell(
+                          onTap: () => state.setAccent(accent),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: col,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSel ? Colors.white : Colors.transparent,
+                                width: 2,
+                              ),
+                              boxShadow: isSel
+                                  ? [BoxShadow(color: col.withOpacity(0.5), blurRadius: 6)]
+                                  : null,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+                const Divider(color: AppTheme.borderColor, height: 24),
+                // OLED Pure Black mode
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(state.tr('oled_mode'), style: const TextStyle(fontSize: 13)),
+                  value: state.isOledMode,
+                  onChanged: (v) => state.setOledMode(v),
                 ),
               ],
             ),
@@ -237,7 +289,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   children: const [
                     Text('Scrcpy GUI Flutter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                     SizedBox(height: 2),
-                    Text('Version 2.1.0 • Master Release', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                    Text('Version 3.0.0 • Ultimate Master Release', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                   ],
                 ),
                 const Spacer(),

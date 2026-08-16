@@ -13,7 +13,7 @@ class GeneralCard extends StatelessWidget {
     final cfg = state.config;
 
     return CustomSectionCard(
-      title: 'General & Video Source',
+      title: 'General, Camera & Window Snap',
       icon: Icons.computer_rounded,
       accentColor: AppTheme.orangeAccent,
       onReset: () {
@@ -28,6 +28,8 @@ class GeneralCard extends StatelessWidget {
         cfg.bitRate = 8;
         cfg.maxFps = '0';
         cfg.maxSize = '0';
+        cfg.customWindowSize = false;
+        cfg.customWindowPos = false;
         state.saveSettings();
       },
       child: Column(
@@ -115,6 +117,55 @@ class GeneralCard extends StatelessWidget {
               ],
             ),
           ],
+          const SizedBox(height: 8),
+
+          // 2. Quick Window Snap Presets
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.bgInput,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.grid_goldenratio, size: 16, color: AppTheme.cyanAccent),
+                const SizedBox(width: 8),
+                const Text('Snap Window:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(width: 10),
+                _buildSnapBtn('🪟 Snap Right', () {
+                  cfg.customWindowSize = true;
+                  cfg.windowWidth = 520;
+                  cfg.windowHeight = 1040;
+                  cfg.customWindowPos = true;
+                  cfg.windowX = 1400;
+                  cfg.windowY = 20;
+                  state.saveSettings();
+                }),
+                const SizedBox(width: 6),
+                _buildSnapBtn('🪟 Snap Left', () {
+                  cfg.customWindowSize = true;
+                  cfg.windowWidth = 520;
+                  cfg.windowHeight = 1040;
+                  cfg.customWindowPos = true;
+                  cfg.windowX = 20;
+                  cfg.windowY = 20;
+                  state.saveSettings();
+                }),
+                const SizedBox(width: 6),
+                _buildSnapBtn('📱 Mini PiP', () {
+                  cfg.customWindowSize = true;
+                  cfg.windowWidth = 380;
+                  cfg.windowHeight = 780;
+                  cfg.customWindowPos = true;
+                  cfg.windowX = 1520;
+                  cfg.windowY = 260;
+                  cfg.alwaysOnTop = true;
+                  state.saveSettings();
+                }),
+              ],
+            ),
+          ),
           const SizedBox(height: 8),
 
           // Row 1: Window Title, Fullscreen, Screen Off
@@ -284,6 +335,22 @@ class GeneralCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSnapBtn(String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppTheme.bgCard,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppTheme.borderColor),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textPrimary)),
       ),
     );
   }

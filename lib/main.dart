@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
-import 'theme/app_theme.dart';
 import 'views/home_screen.dart';
 
 void main() {
@@ -19,10 +18,12 @@ class ScrcpyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+
     return MaterialApp(
-      title: 'Scrcpy GUI Flutter',
+      title: 'Scrcpy GUI Flutter - Ultimate Edition',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: state.theme,
       home: const HomeScreen(),
     );
   }
